@@ -1,0 +1,120 @@
+import { Phone, MapPin, Clock, Check, Truck } from "lucide-react";
+import type { Order } from "@/data/deliveryData";
+import { cn } from "@/lib/utils";
+
+interface OrderCardProps {
+  order: Order;
+  onStatusUpdate: (orderId: string, status: Order["status"]) => void;
+}
+
+const OrderCard = ({ order, onStatusUpdate }: OrderCardProps) => {
+  const isDelivered = order.status === "delivered";
+
+  const getStatusBadge = () => {
+    switch (order.status) {
+      case "delivered":
+        return <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">Yetkazildi</span>;
+      case "on_way":
+        return <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">Yo'lda</span>;
+      case "ready":
+        return <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">Tayyor</span>;
+      default:
+        return <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Tayyorlanmoqda</span>;
+    }
+  };
+
+  const renderActionButton = () => {
+    switch (order.status) {
+      case "pending":
+        return (
+          <button
+            disabled
+            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-secondary py-2.5 text-sm font-medium text-secondary-foreground opacity-50"
+          >
+            <Clock className="h-4 w-4" />
+            Tayyorlanmoqda...
+          </button>
+        );
+      case "ready":
+        return (
+          <button
+            onClick={() => onStatusUpdate(order.id, "on_way")}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-700"
+          >
+            <Truck className="h-4 w-4" />
+            Jarayonda
+          </button>
+        );
+      case "on_way":
+        return (
+          <button
+            onClick={() => onStatusUpdate(order.id, "delivered")}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 text-sm font-medium text-white transition-all hover:bg-green-700"
+          >
+            <Check className="h-4 w-4" />
+            Yetkazib berildi
+          </button>
+        );
+      case "delivered":
+        return (
+          <div className="flex items-center justify-center gap-2 rounded-lg bg-green-50 py-2.5 text-sm font-medium text-green-700">
+            <Check className="h-4 w-4" />
+            Yetkazib berildi
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <article
+      className={cn(
+        "rounded-xl border bg-card p-5 shadow-cafe transition-all duration-300",
+        isDelivered ? "opacity-75" : "hover:shadow-cafe-lg"
+      )}
+    >
+      {/* Header */}
+      <div className="mb-4 flex items-start justify-between">
+        <div>
+          <h3 className="font-semibold text-card-foreground">
+            {order.productName}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Miqdor: <span className="font-medium">{order.quantity} dona</span>
+          </p>
+        </div>
+        {getStatusBadge()}
+      </div>
+
+      {/* Customer Info */}
+      <div className="mb-4 space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-card-foreground">
+          <span className="font-medium">{order.customerName}</span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Phone className="h-4 w-4" />
+          <a
+            href={`tel:${order.phoneNumber.replace(/\s/g, "")}`}
+            className="hover:text-primary"
+          >
+            {order.phoneNumber}
+          </a>
+        </div>
+        <div className="flex items-start gap-2 text-muted-foreground">
+          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>{order.address}</span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>Buyurtma vaqti: {order.createdAt}</span>
+        </div>
+      </div>
+
+      {/* Action Button */}
+      {renderActionButton()}
+    </article>
+  );
+};
+
+export default OrderCard;
