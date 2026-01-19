@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, MapPin } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/data/menuData";
 import { toast } from "sonner";
 import { CashLogo, ClickLogo, PaymeLogo, PaynetLogo, UzumLogo } from "./payment/PaymentLogos";
@@ -48,8 +49,10 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
 
   if (!isOpen || !item) return null;
 
+  const isTelegramUser = !!prefilledName && !!prefilledPhone;
   const totalPrice = item.price * quantity;
-  const isFormValid = fullName.trim().length >= 2 && phoneNumber.trim().length >= 9 && address.trim().length >= 3;
+
+  const isFormValid = (isTelegramUser || (fullName.trim().length >= 2 && phoneNumber.trim().length >= 9)) && address.trim().length >= 3;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("uz-UZ").format(price) + " so'm";
@@ -140,7 +143,7 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
             Buyurtma berish
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ma'lumotlaringizni kiriting
+            {isTelegramUser ? `Salom, ${fullName}! Buyurtmangizni rasmiylashtiring` : "Ma'lumotlaringizni kiriting"}
           </p>
         </div>
 
@@ -156,43 +159,47 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full name */}
-          <div>
-            <label
-              htmlFor="fullName"
-              className="mb-1.5 block text-sm font-medium text-foreground"
-            >
-              Ism va familiya <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="To'liq ismingiz"
-              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-          </div>
+          {!isTelegramUser && (
+            <>
+              {/* Full name */}
+              <div>
+                <label
+                  htmlFor="fullName"
+                  className="mb-1.5 block text-sm font-medium text-foreground"
+                >
+                  Ism va familiya <span className="text-destructive">*</span>
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="To'liq ismingiz"
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                />
+              </div>
 
-          {/* Phone number */}
-          <div>
-            <label
-              htmlFor="phoneNumber"
-              className="mb-1.5 block text-sm font-medium text-foreground"
-            >
-              Telefon raqam <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="phoneNumber"
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="+998 90 123 45 67"
-              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              required
-            />
-          </div>
+              {/* Phone number */}
+              <div>
+                <label
+                  htmlFor="phoneNumber"
+                  className="mb-1.5 block text-sm font-medium text-foreground"
+                >
+                  Telefon raqam <span className="text-destructive">*</span>
+                </label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+998 90 123 45 67"
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                />
+              </div>
+            </>
+          )}
 
           {/* Quantity */}
           <div>
@@ -231,31 +238,40 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
           {/* Address */}
           <div>
             <label
-              htmlFor="address"
               className="mb-1.5 block text-sm font-medium text-foreground"
             >
               Manzil <span className="text-destructive">*</span>
             </label>
-            <div className="flex gap-2">
-              <input
-                id="address"
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Yetkazish manzili"
-                className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                required
-              />
-              <button
-                type="button"
-                onClick={handleGetLocation}
-                disabled={loadingLocation}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                title="Joylashuvni olish"
-              >
-                <MapPin className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleGetLocation}
+              disabled={loadingLocation}
+              className={cn(
+                "w-full flex items-center justify-between gap-3 rounded-lg border border-input bg-background px-4 py-3 text-sm transition-all hover:bg-muted active:scale-[0.99]",
+                address ? "border-primary bg-primary/5" : "border-dashed"
+              )}
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full shrink-0",
+                  address ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                )}>
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <span className={cn(
+                  "truncate font-medium",
+                  address ? "text-foreground" : "text-muted-foreground"
+                )}>
+                  {loadingLocation ? "Aniqlanmoqda..." : (address || "📍 Joylashuvni jo'natish")}
+                </span>
+              </div>
+              {address && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">O'zgartirish</span>
+              )}
+            </button>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Tugmani bosing va joylashuvingizni yuboring
+            </p>
           </div>
 
           {/* Payment Method */}
