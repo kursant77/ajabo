@@ -14,6 +14,9 @@ interface PaymentConfig {
 export const generatePaymentUrl = (method: PaymentMethod, config: PaymentConfig): string | null => {
     const { orderId, amount, productName, phoneNumber } = config;
 
+    // Device detection
+    const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     // ℹ️ IMPORTANT: O'zingizning Merchant ma'lumotlaringizni bu yerga yozing.
     // Bu ID'larni Click/Payme bilan shartnoma imzolagandan so'ng olasiz.
     const MERCHANT_CONFIG = {
@@ -34,13 +37,20 @@ export const generatePaymentUrl = (method: PaymentMethod, config: PaymentConfig)
 
     switch (method) {
         case "click":
-            // Standard Click.uz URL format
-            return `https://my.click.uz/services/pay?service_id=${MERCHANT_CONFIG.click.service_id}&merchant_id=${MERCHANT_CONFIG.click.merchant_id}&amount=${amount}&transaction_param=${orderId}`;
+            const clickQuery = `service_id=${MERCHANT_CONFIG.click.service_id}&merchant_id=${MERCHANT_CONFIG.click.merchant_id}&amount=${amount}&transaction_param=${orderId}`;
+            // If mobile, try opening Click app directly, otherwise use web URL
+            return isMobile
+                ? `click://pay?${clickQuery}`
+                : `https://my.click.uz/services/pay?${clickQuery}`;
 
         case "payme":
-            // Standard Payme.uz URL format (base64 encoded params)
-            const paymeParams = btoa(`m=${MERCHANT_CONFIG.payme.merchant_id};ac.order_id=${orderId};a=${amount * 100}`);
-            return `https://checkout.paycom.uz/${paymeParams}`;
+            const amountInTiyn = amount * 100;
+            const paymeBaseParams = `m=${MERCHANT_CONFIG.payme.merchant_id};ac.order_id=${orderId};a=${amountInTiyn}`;
+
+            // On mobile, Payme standard URL handles redirection well, but deep link is also an option
+            return isMobile
+                ? `https://checkout.paycom.uz/${btoa(paymeBaseParams)}` // Payme standard handles apps via Universal Links
+                : `https://checkout.paycom.uz/${btoa(paymeBaseParams)}`;
 
         case "uzum":
             // Uzum Bank checkout (simulated)
