@@ -18,28 +18,49 @@ const Index = () => {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
-  const [telegramUserId, setTelegramUserId] = useState<number | null>(null);
-  const [prefilledName, setPrefilledName] = useState<string>("");
-  const [prefilledPhone, setPrefilledPhone] = useState<string>("");
+
+  // Initialize state from localStorage or URL
+  const [telegramUserId, setTelegramUserId] = useState<number | null>(() => {
+    const saved = localStorage.getItem("telegram_user_id");
+    return saved ? parseInt(saved, 10) : null;
+  });
+  const [prefilledName, setPrefilledName] = useState<string>(() => localStorage.getItem("full_name") || "");
+  const [prefilledPhone, setPrefilledPhone] = useState<string>(() => localStorage.getItem("phone") || "");
 
   useEffect(() => {
     const userId = searchParams.get("telegram_user_id");
     const fullName = searchParams.get("full_name");
     const phone = searchParams.get("phone");
 
+    let updated = false;
+
     if (userId) {
       const parsedId = parseInt(userId, 10);
       if (!isNaN(parsedId)) {
         setTelegramUserId(parsedId);
+        localStorage.setItem("telegram_user_id", userId);
         console.log("Found Telegram User ID:", parsedId);
+        updated = true;
       }
     }
 
     if (fullName) {
-      setPrefilledName(decodeURIComponent(fullName));
+      const decodedName = decodeURIComponent(fullName);
+      setPrefilledName(decodedName);
+      localStorage.setItem("full_name", decodedName);
+      updated = true;
     }
+
     if (phone) {
-      setPrefilledPhone(decodeURIComponent(phone));
+      const decodedPhone = decodeURIComponent(phone);
+      setPrefilledPhone(decodedPhone);
+      localStorage.setItem("phone", decodedPhone);
+      updated = true;
+    }
+
+    // Clear URL params after saving to localStorage to keep URL clean (optional)
+    if (updated && (userId || fullName || phone)) {
+      // toast.success(`Xush kelibsiz, ${fullName || prefilledName}!`);
     }
   }, [searchParams]);
 
@@ -114,10 +135,20 @@ const Index = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("telegram_user_id");
+    localStorage.removeItem("full_name");
+    localStorage.removeItem("phone");
+    setTelegramUserId(null);
+    setPrefilledName("");
+    setPrefilledPhone("");
+    toast.success("Tizimdan chiqildi");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <Header />
+      <Header userName={prefilledName} onLogout={handleLogout} />
 
       {/* Category Tabs */}
       <CategoryTabs

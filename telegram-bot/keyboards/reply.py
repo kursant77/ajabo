@@ -26,6 +26,12 @@ def get_main_menu_keyboard(web_app_url: str = None) -> ReplyKeyboardMarkup:
     else:
         buttons.append([KeyboardButton(text="🍔 Buyurtma berish")])
         
+    # Add secondary buttons
+    buttons.append([
+        KeyboardButton(text="📝 Mening buyurtmalarim"),
+        KeyboardButton(text="📞 Adminga bog'lanish")
+    ])
+    
     keyboard = ReplyKeyboardMarkup(
         keyboard=buttons,
         resize_keyboard=True,

@@ -5,7 +5,7 @@ Starts both the Telegram bot polling and the FastAPI webhook server.
 import asyncio
 from aiogram import Bot
 from bot import bot, dp, WEBHOOK_HOST, WEBHOOK_PORT
-from handlers import start, webapp
+from handlers import start, webapp, orders
 from api.order_listener import app as webhook_app
 from utils.logger import logger
 import uvicorn
@@ -33,6 +33,7 @@ async def start_bot():
     # Register handlers
     dp.include_router(start.router)
     dp.include_router(webapp.router)
+    dp.include_router(orders.router)
     
     # Register startup/shutdown handlers
     dp.startup.register(on_startup)
