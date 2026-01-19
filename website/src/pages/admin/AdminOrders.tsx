@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
+import { useAdminOrdersQuery } from "@/hooks/useAdminOrdersQuery";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminOrderCard from "@/components/admin/AdminOrderCard";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { type AdminOrder } from "@/data/adminData";
 
 const AdminOrders = () => {
-  const { orders, updateOrder, loading } = useSupabaseOrders();
+  const { updateOrder } = useSupabaseOrders();
+  const { data: orders = [], isLoading, isRefetching } = useAdminOrdersQuery(10000); // Poll every 10 seconds
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"pending" | "processing" | "delivered">("pending");
 
@@ -65,7 +67,7 @@ const AdminOrders = () => {
     };
   }, [orders, searchQuery, statusFilter]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <AdminLayout title="Buyurtmalar">
         <div className="flex justify-center items-center h-48">
@@ -87,6 +89,12 @@ const AdminOrders = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
+          {isRefetching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Yangilanmoqda</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button

@@ -7,6 +7,7 @@ export interface Order {
   status: "pending" | "ready" | "on_way" | "delivered" | "pending_payment";
   address: string;
   createdAt: string;
+  rawCreatedAt: Date;
   totalPrice?: number;
 }
 
@@ -20,6 +21,7 @@ export const mockOrders: Order[] = [
     status: "pending",
     address: "Yunusobod tumani, 12-uy",
     createdAt: "10:30",
+    rawCreatedAt: new Date(),
   },
   {
     id: "2",
@@ -30,36 +32,7 @@ export const mockOrders: Order[] = [
     status: "pending",
     address: "Chilonzor tumani, 45-uy",
     createdAt: "10:45",
-  },
-  {
-    id: "3",
-    productName: "Tiramisu",
-    quantity: 3,
-    customerName: "Bobur Aliyev",
-    phoneNumber: "+998 93 345 67 89",
-    status: "delivered",
-    address: "Mirzo Ulug'bek tumani, 78-uy",
-    createdAt: "09:15",
-  },
-  {
-    id: "4",
-    productName: "Latte",
-    quantity: 4,
-    customerName: "Malika Tosheva",
-    phoneNumber: "+998 94 456 78 90",
-    status: "pending",
-    address: "Sergeli tumani, 23-uy",
-    createdAt: "11:00",
-  },
-  {
-    id: "5",
-    productName: "Nonushta to'plami",
-    quantity: 2,
-    customerName: "Jasur Qodirov",
-    phoneNumber: "+998 95 567 89 01",
-    status: "delivered",
-    address: "Yakkasaroy tumani, 56-uy",
-    createdAt: "08:30",
+    rawCreatedAt: new Date(),
   },
 ];
 
