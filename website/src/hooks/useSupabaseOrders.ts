@@ -18,7 +18,7 @@ type DBOrder = {
     total_price: number | null;
     delivery_person: string | null;
     telegram_user_id: number | null;
-    order_type: string;
+    order_type?: string;
 };
 
 export function useSupabaseOrders() {
@@ -181,7 +181,18 @@ export function useSupabaseOrders() {
             };
 
             const { data, error } = await supabase.from("orders").insert(dbOrder).select().single();
-            if (error) throw error;
+
+            if (error) {
+                // If the error is about a missing column, try inserting without order_type
+                if (error.message?.includes("column \"order_type\" of relation \"orders\" does not exist")) {
+                    console.warn("⚠️ 'order_type' column missing in DB. Retrying insert without it...");
+                    const { order_type, ...fallbackOrder } = dbOrder;
+                    const { data: retryData, error: retryError } = await supabase.from("orders").insert(fallbackOrder).select().single();
+                    if (retryError) throw retryError;
+                    return retryData?.id;
+                }
+                throw error;
+            }
 
             // Notify Telegram bot for new order (ONLY IF NOT WAITING FOR PAYMENT)
             if (data && data.telegram_user_id && data.status !== "pending_payment") {

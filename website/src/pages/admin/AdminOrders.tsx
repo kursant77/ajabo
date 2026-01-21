@@ -18,14 +18,16 @@ const AdminOrders = () => {
   // Memoize handlers to prevent re-creating functions on every render
   const handleStatusChange = useCallback((orderId: string, status: "pending" | "ready" | "on_way" | "delivered") => {
     updateOrder(orderId, { status });
-    toast.success(
-      status === "delivered"
-        ? "Buyurtma yetkazildi deb belgilandi"
-        : status === "ready"
-          ? "Buyurtma tayyor deb belgilandi"
-          : "Buyurtma holati o'zgartirildi"
-    );
-  }, [updateOrder]);
+    const order = orders.find(o => o.id === orderId);
+
+    if (status === "delivered") {
+      toast.success(order?.orderType === "delivery" ? "Buyurtma yetkazildi!" : "Buyurtma yakunlandi!");
+    } else if (status === "ready") {
+      toast.success("Buyurtma tayyor deb belgilandi");
+    } else {
+      toast.success("Buyurtma holati yangilandi");
+    }
+  }, [updateOrder, orders]);
 
   const handleAssignDelivery = useCallback((orderId: string) => {
     updateOrder(orderId, { deliveryPerson: "Sardor Yusupov" });

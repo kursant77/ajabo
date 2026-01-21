@@ -10,6 +10,7 @@ export interface Order {
   rawCreatedAt: Date;
   totalPrice?: number;
   orderType: "delivery" | "takeaway" | "preorder";
+  telegramUserId?: number | null;
 }
 
 export const mockOrders: Order[] = [

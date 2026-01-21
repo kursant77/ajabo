@@ -1,29 +1,38 @@
-import { useState } from "react";
-import { toast } from "sonner";
+import { useState, useEffect } from "react";
 import { Save, Store, Clock, MapPin, Phone } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { useSupabaseSettings, CafeSettings } from "@/hooks/useSupabaseSettings";
 
 const AdminSettings = () => {
-  const [settings, setSettings] = useState({
-    cafeName: "Ajabo Coffee",
-    address: "Toshkent shahar, Amir Temur ko'chasi 108",
-    phone: "+998 71 123 45 67",
-    openTime: "08:00",
-    closeTime: "22:00",
-    deliveryEnabled: true,
-    minOrderAmount: 30000,
-    deliveryFee: 10000,
-    description: "Eng mazali kofe va taomlar sizni kutmoqda!",
-  });
+  const { settings, loading, updateSettings } = useSupabaseSettings();
+  const [localSettings, setLocalSettings] = useState<CafeSettings | null>(null);
 
-  const handleSave = () => {
-    // In real app, this would save to backend
-    toast.success("Sozlamalar saqlandi");
+  // Sync local state when settings load
+  useEffect(() => {
+    if (settings) {
+      setLocalSettings(settings);
+    }
+  }, [settings]);
+
+  const handleSave = async () => {
+    if (localSettings) {
+      await updateSettings(localSettings);
+    }
   };
+
+  if (loading || !localSettings) {
+    return (
+      <AdminLayout title="Sozlamalar">
+        <div className="flex items-center justify-center h-48">
+          <p className="animate-pulse text-muted-foreground">Yuklanmoqda...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Sozlamalar">
@@ -39,9 +48,9 @@ const AdminSettings = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Kafe nomi</label>
               <Input
-                value={settings.cafeName}
+                value={localSettings.cafe_name}
                 onChange={(e) =>
-                  setSettings({ ...settings, cafeName: e.target.value })
+                  setLocalSettings({ ...localSettings, cafe_name: e.target.value })
                 }
               />
             </div>
@@ -51,9 +60,9 @@ const AdminSettings = () => {
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={settings.address}
+                  value={localSettings.address}
                   onChange={(e) =>
-                    setSettings({ ...settings, address: e.target.value })
+                    setLocalSettings({ ...localSettings, address: e.target.value })
                   }
                   className="pl-10"
                 />
@@ -65,9 +74,9 @@ const AdminSettings = () => {
               <div className="relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={settings.phone}
+                  value={localSettings.phone}
                   onChange={(e) =>
-                    setSettings({ ...settings, phone: e.target.value })
+                    setLocalSettings({ ...localSettings, phone: e.target.value })
                   }
                   className="pl-10"
                 />
@@ -77,9 +86,9 @@ const AdminSettings = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Tavsif</label>
               <Textarea
-                value={settings.description}
+                value={localSettings.description}
                 onChange={(e) =>
-                  setSettings({ ...settings, description: e.target.value })
+                  setLocalSettings({ ...localSettings, description: e.target.value })
                 }
                 rows={3}
               />
@@ -99,9 +108,9 @@ const AdminSettings = () => {
               <label className="text-sm font-medium">Ochilish vaqti</label>
               <Input
                 type="time"
-                value={settings.openTime}
+                value={localSettings.open_time}
                 onChange={(e) =>
-                  setSettings({ ...settings, openTime: e.target.value })
+                  setLocalSettings({ ...localSettings, open_time: e.target.value })
                 }
               />
             </div>
@@ -109,9 +118,9 @@ const AdminSettings = () => {
               <label className="text-sm font-medium">Yopilish vaqti</label>
               <Input
                 type="time"
-                value={settings.closeTime}
+                value={localSettings.close_time}
                 onChange={(e) =>
-                  setSettings({ ...settings, closeTime: e.target.value })
+                  setLocalSettings({ ...localSettings, close_time: e.target.value })
                 }
               />
             </div>
@@ -135,9 +144,9 @@ const AdminSettings = () => {
                 </p>
               </div>
               <Switch
-                checked={settings.deliveryEnabled}
+                checked={localSettings.delivery_enabled}
                 onCheckedChange={(checked) =>
-                  setSettings({ ...settings, deliveryEnabled: checked })
+                  setLocalSettings({ ...localSettings, delivery_enabled: checked })
                 }
               />
             </div>
@@ -149,11 +158,11 @@ const AdminSettings = () => {
                 </label>
                 <Input
                   type="number"
-                  value={settings.minOrderAmount}
+                  value={localSettings.min_order_amount}
                   onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      minOrderAmount: Number(e.target.value),
+                    setLocalSettings({
+                      ...localSettings,
+                      min_order_amount: Number(e.target.value),
                     })
                   }
                 />
@@ -164,11 +173,11 @@ const AdminSettings = () => {
                 </label>
                 <Input
                   type="number"
-                  value={settings.deliveryFee}
+                  value={localSettings.delivery_fee}
                   onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      deliveryFee: Number(e.target.value),
+                    setLocalSettings({
+                      ...localSettings,
+                      delivery_fee: Number(e.target.value),
                     })
                   }
                 />

@@ -15,6 +15,7 @@ type DBOrder = {
     total_price: number | null;
     delivery_person: string | null;
     telegram_user_id: number | null;
+    order_type: string | null;
 };
 
 // Map DB row to App Order type
@@ -31,6 +32,7 @@ const mapToAppOrder = (row: DBOrder): AdminOrder => ({
     totalPrice: row.total_price || 0,
     deliveryPerson: row.delivery_person || undefined,
     telegramUserId: row.telegram_user_id || null,
+    orderType: (row.order_type as any) || "delivery",
 });
 
 export const useAdminOrdersQuery = (refetchInterval = 5000) => {

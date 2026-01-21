@@ -32,14 +32,28 @@ const AdminOrderCard = ({
     }
   };
 
+  const getOrderTypeBadge = (type?: string) => {
+    switch (type) {
+      case "takeaway":
+        return <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50/50">🥡 O'zi bilan</Badge>;
+      case "preorder":
+        return <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50/50">📅 Bron qilish</Badge>;
+      default:
+        return <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50/50">🚚 Dastavka</Badge>;
+    }
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border/50 p-5 shadow-sm hover:shadow-md transition-all duration-200">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-lg text-foreground">
-            {order.productName}
-          </h3>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-lg text-foreground">
+              {order.productName}
+            </h3>
+            {getOrderTypeBadge(order.orderType)}
+          </div>
           <p className="text-sm text-muted-foreground">
             {order.quantity} dona • {formatPrice(order.totalPrice)}
           </p>
@@ -79,7 +93,10 @@ const AdminOrderCard = ({
           <Button
             variant="default"
             size="sm"
-            onClick={() => onStatusChange(order.id, "ready")}
+            onClick={() => {
+              const nextStatus = order.orderType === "delivery" ? "ready" : "delivered";
+              onStatusChange(order.id, nextStatus as any);
+            }}
             className="w-full"
           >
             Buyurtma tayyor

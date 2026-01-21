@@ -15,7 +15,8 @@ import {
   Menu,
   Bell,
   BellOff,
-  Tag
+  Tag,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -51,6 +52,11 @@ const menuItems = [
     icon: Truck,
     label: "Dastavkachilar",
     path: "/admin/delivery",
+  },
+  {
+    icon: Users,
+    label: "Foydalanuvchilar",
+    path: "/admin/users",
   },
 ];
 

@@ -40,6 +40,12 @@ class OrderUpdate(BaseModel):
     product_name: Optional[str] = Field(None, description="Name of the product")
 
 
+class DirectMessage(BaseModel):
+    """Direct message payload model."""
+    telegram_user_id: int = Field(..., description="User's Telegram ID")
+    message: str = Field(..., description="Message content")
+
+
 @app.post("/api/order-update")
 async def order_update_webhook(
     order_update: OrderUpdate,
@@ -99,6 +105,32 @@ async def order_update_webhook(
     }
 
 
+@app.post("/api/send-message")
+async def send_direct_message(
+    payload: DirectMessage,
+    request: Request,
+    x_api_key: Optional[str] = Header(None)
+):
+    """
+    Endpoint for sending direct messages to users via Telegram ID.
+    """
+    if x_api_key != API_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    bot: Bot = request.app.state.bot
+    
+    try:
+        await bot.send_message(
+            chat_id=payload.telegram_user_id,
+            text=f"✉️ <b>Ajabo Burgerdan xabar:</b>\n\n{payload.message}",
+            parse_mode="HTML"
+        )
+        return {"success": True, "message": "Message sent"}
+    except Exception as e:
+        logger.error(f"Failed to send direct message: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
@@ -116,6 +148,7 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "order_update": "/api/order-update",
+            "send_message": "/api/send-message",
             "health": "/health"
         }
     }

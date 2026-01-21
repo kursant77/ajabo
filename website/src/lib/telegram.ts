@@ -48,3 +48,31 @@ export async function notifyTelegramBot(payload: NotificationPayload) {
         return null;
     }
 }
+
+/**
+ * Sends a direct message to a user via the Telegram bot.
+ */
+export async function sendTelegramMessage(telegram_id: number, message: string) {
+    if (!WEBHOOK_URL || !API_SECRET_KEY) return null;
+
+    try {
+        const url = WEBHOOK_URL.replace("/order-update", "/send-message");
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": API_SECRET_KEY,
+            },
+            body: JSON.stringify({
+                telegram_user_id: telegram_id,
+                message: message
+            }),
+        });
+
+        if (!response.ok) throw new Error("Failed to send message");
+        return await response.json();
+    } catch (error) {
+        console.error("Error sending Telegram message:", error);
+        throw error;
+    }
+}
