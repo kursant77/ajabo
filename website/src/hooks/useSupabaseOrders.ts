@@ -18,6 +18,7 @@ type DBOrder = {
     total_price: number | null;
     delivery_person: string | null;
     telegram_user_id: number | null;
+    order_type: string;
 };
 
 export function useSupabaseOrders() {
@@ -38,6 +39,7 @@ export function useSupabaseOrders() {
         totalPrice: row.total_price || 0,
         deliveryPerson: row.delivery_person || undefined,
         telegramUserId: row.telegram_user_id || null,
+        orderType: (row.order_type as any) || "delivery",
     });
 
     // Helper to map App updates to DB structure
@@ -46,6 +48,7 @@ export function useSupabaseOrders() {
         if (updates.status) dbUpdates.status = updates.status;
         if (updates.deliveryPerson) dbUpdates.delivery_person = updates.deliveryPerson;
         if (updates.telegramUserId) dbUpdates.telegram_user_id = updates.telegramUserId;
+        if (updates.orderType) dbUpdates.order_type = updates.orderType;
         // Add other fields as needed
         return dbUpdates;
     };
@@ -173,6 +176,7 @@ export function useSupabaseOrders() {
                 address: order.address,
                 total_price: order.totalPrice,
                 telegram_user_id: (order as any).telegramUserId || null,
+                order_type: order.orderType,
                 // created_at defaults to now()
             };
 

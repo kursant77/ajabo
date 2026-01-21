@@ -24,6 +24,7 @@ export interface OrderData {
   location?: { lat: number; lng: number };
   paymentMethod: "click" | "paynet" | "payme" | "uzum" | "cash";
   totalPrice: number;
+  orderType: "delivery" | "takeaway" | "preorder";
 }
 
 const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilledPhone }: OrderModalProps) => {
@@ -33,6 +34,7 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
   const [address, setAddress] = useState("");
   const [location, setLocation] = useState<{ lat: number; lng: number } | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<"click" | "paynet" | "payme" | "uzum" | "cash">("cash");
+  const [orderType, setOrderType] = useState<"delivery" | "takeaway" | "preorder">("delivery");
   const [loadingLocation, setLoadingLocation] = useState(false);
 
   // Reset or pre-fill form when modal opens
@@ -44,15 +46,17 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
       setAddress("");
       setLocation(undefined);
       setPaymentMethod("cash");
+      setOrderType("delivery");
     }
   }, [isOpen, item?.id, prefilledName, prefilledPhone]);
 
   if (!isOpen || !item) return null;
 
   const isTelegramUser = !!prefilledName && !!prefilledPhone;
-  const totalPrice = item.price * quantity;
+  const totals = item.price * quantity;
+  const totalPrice = totals;
 
-  const isFormValid = (isTelegramUser || (fullName.trim().length >= 2 && phoneNumber.trim().length >= 9)) && address.trim().length >= 3;
+  const isFormValid = (isTelegramUser || (fullName.trim().length >= 2 && phoneNumber.trim().length >= 9)) && (orderType !== 'delivery' || address.trim().length >= 3);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("uz-UZ").format(price) + " so'm";
@@ -98,6 +102,7 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
       location,
       paymentMethod,
       totalPrice,
+      orderType,
     };
 
     console.log('OrderModal - Sending order data:', orderData);
@@ -116,6 +121,12 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
     { id: "payme", label: "Payme", icon: <PaymeLogo className="h-4 w-auto" /> },
     { id: "uzum", label: "Uzum Bank", icon: <UzumLogo className="h-4 w-auto" /> },
     { id: "paynet", label: "Paynet", icon: <PaynetLogo className="h-4 w-auto" /> },
+  ];
+
+  const orderTypes = [
+    { id: "delivery", label: "Yetkazib berish", icon: "🚚" },
+    { id: "takeaway", label: "O'zi bilan (Saboy)", icon: "🥡" },
+    { id: "preorder", label: "Oldindan bron qilish", icon: "📅" },
   ];
 
   return (
@@ -235,44 +246,69 @@ const OrderModal = ({ item, isOpen, onClose, onConfirm, prefilledName, prefilled
             </div>
           </div>
 
-          {/* Address */}
+          {/* Order Type Selection */}
           <div>
-            <label
-              className="mb-1.5 block text-sm font-medium text-foreground"
-            >
-              Manzil <span className="text-destructive">*</span>
+            <label className="mb-2 block text-sm font-medium text-foreground">
+              Buyurtma turi <span className="text-destructive">*</span>
             </label>
-            <button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={loadingLocation}
-              className={cn(
-                "w-full flex items-center justify-between gap-3 rounded-lg border border-input bg-background px-4 py-3 text-sm transition-all hover:bg-muted active:scale-[0.99]",
-                address ? "border-primary bg-primary/5" : "border-dashed"
-              )}
-            >
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full shrink-0",
-                  address ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                )}>
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <span className={cn(
-                  "truncate font-medium",
-                  address ? "text-foreground" : "text-muted-foreground"
-                )}>
-                  {loadingLocation ? "Aniqlanmoqda..." : (address || "📍 Joylashuvni jo'natish")}
-                </span>
-              </div>
-              {address && (
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">O'zgartirish</span>
-              )}
-            </button>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Tugmani bosing va joylashuvingizni yuboring
-            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {orderTypes.map((type) => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => setOrderType(type.id as any)}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all duration-300 ${orderType === type.id
+                    ? "border-primary bg-primary/5 text-primary shadow-sm"
+                    : "border-input bg-background text-foreground hover:bg-secondary/50"
+                    }`}
+                >
+                  <span className="text-lg">{type.icon}</span>
+                  {type.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Address - Only for Delivery */}
+          {orderType === "delivery" && (
+            <div>
+              <label
+                className="mb-1.5 block text-sm font-medium text-foreground"
+              >
+                Manzil <span className="text-destructive">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleGetLocation}
+                disabled={loadingLocation}
+                className={cn(
+                  "w-full flex items-center justify-between gap-3 rounded-lg border border-input bg-background px-4 py-3 text-sm transition-all hover:bg-muted active:scale-[0.99]",
+                  address ? "border-primary bg-primary/5" : "border-dashed"
+                )}
+              >
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full shrink-0",
+                    address ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                  )}>
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <span className={cn(
+                    "truncate font-medium",
+                    address ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {loadingLocation ? "Aniqlanmoqda..." : (address || "📍 Joylashuvni jo'natish")}
+                  </span>
+                </div>
+                {address && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">O'zgartirish</span>
+                )}
+              </button>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Tugmani bosing va joylashuvingizni yuboring
+              </p>
+            </div>
+          )}
 
           {/* Payment Method */}
           <div>

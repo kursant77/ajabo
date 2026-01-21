@@ -88,12 +88,16 @@ const DeliveryDashboard = () => {
 
   // Stats (Exclude unpaid orders)
   const paidOrders = orders.filter((o) => o.status !== "pending_payment");
-  const pendingCount = paidOrders.filter((o) => o.status === "pending").length;
-  const deliveredCount = paidOrders.filter((o) => o.status === "delivered").length;
+
+  // Filter for ONLY delivery orders in the delivery dashboard
+  const deliveryOrders = paidOrders.filter((o) => o.orderType === "delivery");
+
+  const pendingCount = deliveryOrders.filter((o) => o.status === "pending").length;
+  const deliveredCount = deliveryOrders.filter((o) => o.status === "delivered").length;
 
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
 
-  const filteredOrders = paidOrders.filter((order) =>
+  const filteredOrders = deliveryOrders.filter((order) =>
     activeTab === "active" ? order.status !== "delivered" : order.status === "delivered"
   );
 

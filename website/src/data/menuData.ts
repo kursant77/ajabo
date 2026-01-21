@@ -10,6 +10,7 @@ export interface MenuItem {
 }
 
 export const categories: { id: Category; label: string }[] = [
+  { id: "all", label: "Hammasi" },
   { id: "kofe", label: "Kofe" },
   { id: "choy", label: "Choy" },
   { id: "shirinliklar", label: "Shirinliklar" },

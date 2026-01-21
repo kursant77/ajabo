@@ -2,8 +2,8 @@ import type { Order } from "./deliveryData";
 
 // Demo admin credentials
 export const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "admin123",
+  username: "kursant410@gmail.com",
+  password: "asadbek3723",
   displayName: "Admin Usta",
 };
 
@@ -24,6 +24,8 @@ export const adminMockOrders: AdminOrder[] = [
     status: "pending",
     address: "Yunusobod tumani, 12-uy",
     createdAt: "10:30",
+    rawCreatedAt: new Date(),
+    orderType: "delivery",
     totalPrice: 44000,
     deliveryPerson: "Sardor Yusupov",
   },
@@ -36,6 +38,8 @@ export const adminMockOrders: AdminOrder[] = [
     status: "pending",
     address: "Chilonzor tumani, 45-uy",
     createdAt: "10:45",
+    rawCreatedAt: new Date(),
+    orderType: "delivery",
     totalPrice: 35000,
   },
   {
@@ -47,6 +51,8 @@ export const adminMockOrders: AdminOrder[] = [
     status: "delivered",
     address: "Mirzo Ulug'bek tumani, 78-uy",
     createdAt: "09:15",
+    rawCreatedAt: new Date(),
+    orderType: "delivery",
     totalPrice: 84000,
     deliveryPerson: "Sardor Yusupov",
   },
@@ -59,6 +65,8 @@ export const adminMockOrders: AdminOrder[] = [
     status: "pending",
     address: "Sergeli tumani, 23-uy",
     createdAt: "11:00",
+    rawCreatedAt: new Date(),
+    orderType: "delivery",
     totalPrice: 96000,
   },
   {
@@ -70,6 +78,8 @@ export const adminMockOrders: AdminOrder[] = [
     status: "delivered",
     address: "Yakkasaroy tumani, 56-uy",
     createdAt: "08:30",
+    rawCreatedAt: new Date(),
+    orderType: "delivery",
     totalPrice: 90000,
     deliveryPerson: "Sardor Yusupov",
   },

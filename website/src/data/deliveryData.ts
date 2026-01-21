@@ -9,6 +9,7 @@ export interface Order {
   createdAt: string;
   rawCreatedAt: Date;
   totalPrice?: number;
+  orderType: "delivery" | "takeaway" | "preorder";
 }
 
 export const mockOrders: Order[] = [
@@ -22,6 +23,7 @@ export const mockOrders: Order[] = [
     address: "Yunusobod tumani, 12-uy",
     createdAt: "10:30",
     rawCreatedAt: new Date(),
+    orderType: "delivery",
   },
   {
     id: "2",
@@ -33,6 +35,7 @@ export const mockOrders: Order[] = [
     address: "Chilonzor tumani, 45-uy",
     createdAt: "10:45",
     rawCreatedAt: new Date(),
+    orderType: "delivery",
   },
 ];
 

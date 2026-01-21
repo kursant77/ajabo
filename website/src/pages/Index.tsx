@@ -14,7 +14,7 @@ import { generatePaymentUrl, isOnlinePayment } from "@/services/paymentService";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState<Category>("kofe");
+  const [activeCategory, setActiveCategory] = useState<Category>("all");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
@@ -95,6 +95,7 @@ const Index = () => {
       createdAt: new Date().toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" }),
       totalPrice: orderData.totalPrice,
       telegramUserId: telegramUserId,
+      orderType: orderData.orderType,
     } as any);
 
     // Filter out undefined if addOrder returns void

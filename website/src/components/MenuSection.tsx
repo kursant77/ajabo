@@ -9,7 +9,7 @@ interface MenuSectionProps {
 
 const MenuSection = ({ activeCategory, onOrder }: MenuSectionProps) => {
   const { products, loading } = useSupabaseProducts();
-  const filteredItems = products.filter((item) => item.category === activeCategory) as unknown as MenuItem[];
+  const filteredItems = products.filter((item) => activeCategory === "all" || item.category === activeCategory) as unknown as MenuItem[];
 
   console.log('MenuSection - All products:', products);
   console.log('MenuSection - Filtered items for category', activeCategory, ':', filteredItems);
