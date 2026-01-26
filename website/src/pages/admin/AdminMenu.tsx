@@ -1,17 +1,15 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSupabaseProducts, type Product } from "@/hooks/useSupabaseProducts";
 import { useSupabaseCategories } from "@/hooks/useSupabaseCategories";
-import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,12 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Pagination from "@/components/admin/Pagination";
 
 const AdminMenu = () => {
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct } = useSupabaseProducts();
-  const { categories, loading: categoriesLoading } = useSupabaseCategories(); // Creating this hook instance
+  const { categories } = useSupabaseCategories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   // Form state
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -35,7 +38,7 @@ const AdminMenu = () => {
     price: 0,
     description: "",
     image: "",
-    category: "" as any, // Initialize empty, will rely on user selection
+    category: "" as any,
   });
 
   const handleOpenModal = (product?: Product) => {
@@ -67,10 +70,18 @@ const AdminMenu = () => {
     setIsModalOpen(false);
   };
 
-  if (productsLoading) return <div className="p-8 text-center">Yuklanmoqda...</div>;
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return products.slice(start, start + itemsPerPage);
+  }, [products, currentPage]);
+
+  if (productsLoading) {
+    return <div className="p-8 text-center">Yuklanmoqda...</div>;
+  }
 
   return (
-    <AdminLayout title="Menyu Boshqaruv">
+    <>
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-xl font-semibold">Mahsulotlar ({products.length})</h2>
         <Button onClick={() => handleOpenModal()}>
@@ -79,7 +90,7 @@ const AdminMenu = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
+        {paginatedProducts.map((product) => (
           <div key={product.id} className="flex gap-4 rounded-lg border bg-card p-4 shadow-sm">
             <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
               <img
@@ -110,6 +121,12 @@ const AdminMenu = () => {
           </div>
         ))}
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -183,7 +200,7 @@ const AdminMenu = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 };
 

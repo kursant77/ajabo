@@ -38,6 +38,7 @@ class OrderUpdate(BaseModel):
         description="Timestamp of the update"
     )
     product_name: Optional[str] = Field(None, description="Name of the product")
+    order_type: Optional[str] = Field(None, description="Type of order: delivery, takeaway, preorder")
 
 
 class DirectMessage(BaseModel):
@@ -87,7 +88,8 @@ async def order_update_webhook(
         telegram_user_id=order_update.telegram_user_id,
         order_id=order_update.order_id,
         status=order_update.status,
-        product_name=order_update.product_name
+        product_name=order_update.product_name,
+        order_type=order_update.order_type
     )
     
     if not result["success"]:

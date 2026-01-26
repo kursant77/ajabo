@@ -28,14 +28,15 @@ const DeliveryLogin = () => {
       if (error || !data) {
         toast.error("Login yoki parol noto'g'ri");
       } else {
+        const displayName = data.display_name || data.full_name || data.username;
         localStorage.setItem(
           "deliveryAuth",
           JSON.stringify({
             isLoggedIn: true,
-            displayName: data.full_name,
+            displayName: displayName,
           })
         );
-        toast.success(`Xush kelibsiz, ${data.full_name}!`);
+        toast.success(`Xush kelibsiz, ${displayName}!`);
         navigate("/delivery/dashboard");
       }
     } catch (err) {

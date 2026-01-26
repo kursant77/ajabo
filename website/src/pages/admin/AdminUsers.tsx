@@ -1,9 +1,8 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSupabaseUsers, UserProfile } from "@/hooks/useSupabaseUsers";
-import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
-import { Search, User as UserIcon, Calendar, Phone, ExternalLink, MessageSquare, Send, X } from "lucide-react";
+import { Search, User as UserIcon, Calendar, Phone, ExternalLink, MessageSquare, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -16,13 +15,25 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "react-router-dom";
+import Pagination from "@/components/admin/Pagination";
 
 const AdminUsers = () => {
+    const navigate = useNavigate();
     const { users, loading } = useSupabaseUsers();
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8; // Fewer items for better mobile view
+
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [messageText, setMessageText] = useState("");
     const [isSending, setIsSending] = useState(false);
+
+    const handleRowClick = (telegramId: number) => {
+        navigate(`/admin/users/${telegramId}`);
+    };
 
     const filteredUsers = useMemo(() => {
         return users.filter(user =>
@@ -31,6 +42,17 @@ const AdminUsers = () => {
             (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase()))
         );
     }, [users, searchQuery]);
+
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const paginatedUsers = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredUsers.slice(start, start + itemsPerPage);
+    }, [filteredUsers, currentPage]);
+
+    // Reset to page 1 when searching
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     const handleSendMessage = async () => {
         if (!selectedUser || !messageText.trim()) return;
@@ -59,16 +81,14 @@ const AdminUsers = () => {
 
     if (loading) {
         return (
-            <AdminLayout title="Foydalanuvchilar">
-                <div className="flex justify-center items-center h-48">
-                    <p className="animate-pulse text-muted-foreground">Yuklanmoqda...</p>
-                </div>
-            </AdminLayout>
+            <div className="flex justify-center items-center h-48">
+                <p className="animate-pulse text-muted-foreground">Yuklanmoqda...</p>
+            </div>
         );
     }
 
     return (
-        <AdminLayout title="Foydalanuvchilar">
+        <>
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="relative max-w-md w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -97,8 +117,12 @@ const AdminUsers = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border/50">
-                        {filteredUsers.map((user) => (
-                            <tr key={user.telegram_id} className="hover:bg-muted/30 transition-colors">
+                        {paginatedUsers.map((user) => (
+                            <tr
+                                key={user.telegram_id}
+                                className="hover:bg-muted/30 transition-colors cursor-pointer"
+                                onClick={() => handleRowClick(user.telegram_id)}
+                            >
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -134,7 +158,10 @@ const AdminUsers = () => {
                                         variant="default"
                                         size="sm"
                                         className="h-8 gap-1.5"
-                                        onClick={() => setSelectedUser(user)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedUser(user);
+                                        }}
                                     >
                                         <MessageSquare className="h-3.5 w-3.5" />
                                         Xabar
@@ -148,8 +175,12 @@ const AdminUsers = () => {
 
             {/* Mobile View: Cards */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
-                {filteredUsers.map((user) => (
-                    <div key={user.telegram_id} className="bg-card rounded-xl border border-border/50 p-5 shadow-sm">
+                {paginatedUsers.map((user) => (
+                    <div
+                        key={user.telegram_id}
+                        className="bg-card rounded-xl border border-border/50 p-5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                        onClick={() => handleRowClick(user.telegram_id)}
+                    >
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -181,7 +212,10 @@ const AdminUsers = () => {
                         <Button
                             variant="default"
                             className="w-full gap-2"
-                            onClick={() => setSelectedUser(user)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUser(user);
+                            }}
                         >
                             <MessageSquare className="h-4 w-4" />
                             Xabar yuborish
@@ -189,6 +223,13 @@ const AdminUsers = () => {
                     </div>
                 ))}
             </div>
+
+            {/* Pagination Component */}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
 
             {filteredUsers.length === 0 && (
                 <div className="text-center py-12">
@@ -239,7 +280,7 @@ const AdminUsers = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </AdminLayout>
+        </>
     );
 };
 

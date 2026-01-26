@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import AdminLayout from "@/components/admin/AdminLayout";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Tag } from "lucide-react";
@@ -10,14 +9,18 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import Pagination from "@/components/admin/Pagination";
 
 const AdminCategories = () => {
     const { categories, loading, addCategory, deleteCategory } = useSupabaseCategories();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,8 +30,14 @@ const AdminCategories = () => {
         setIsModalOpen(false);
     }
 
+    const totalPages = Math.ceil(categories.length / itemsPerPage);
+    const paginatedCategories = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return categories.slice(start, start + itemsPerPage);
+    }, [categories, currentPage]);
+
     return (
-        <AdminLayout title="Kategoriyalar">
+        <>
             <div className="mb-6 flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Barcha Kategoriyalar ({categories.length})</h2>
                 <Button onClick={() => setIsModalOpen(true)}>
@@ -37,8 +46,8 @@ const AdminCategories = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {categories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
+                {paginatedCategories.map((category) => (
+                    <div key={category.id} className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                                 <Tag className="h-5 w-5" />
@@ -53,12 +62,19 @@ const AdminCategories = () => {
                         </Button>
                     </div>
                 ))}
+
                 {categories.length === 0 && !loading && (
-                    <div className="col-span-full text-center text-muted-foreground py-10">
+                    <div className="col-span-full text-center text-muted-foreground py-12 bg-card rounded-2xl border border-dashed border-border/50">
                         Hozircha kategoriyalar yo'q.
                     </div>
                 )}
             </div>
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-[425px]">
@@ -83,7 +99,7 @@ const AdminCategories = () => {
                     </form>
                 </DialogContent>
             </Dialog>
-        </AdminLayout>
+        </>
     );
 };
 

@@ -12,6 +12,7 @@ interface NotificationPayload {
     telegram_user_id: number;
     status: OrderStatus;
     product_name: string;
+    order_type?: string;
 }
 
 /**

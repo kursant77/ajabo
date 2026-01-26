@@ -9,7 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import AdminLayout from "@/components/admin/AdminLayout";
 import StatsCard from "@/components/admin/StatsCard";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 
@@ -94,16 +93,14 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="Bosh sahifa">
-        <div className="flex justify-center items-center h-48">
-          <p>Yuklanmoqda...</p>
-        </div>
-      </AdminLayout>
+      <div className="flex justify-center items-center h-48">
+        <p>Yuklanmoqda...</p>
+      </div>
     );
   }
 
   return (
-    <AdminLayout title="Bosh sahifa">
+    <>
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard
@@ -136,27 +133,6 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* Sales Chart */}
-      <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm mb-8">
-        <h3 className="text-lg font-semibold text-foreground mb-6">
-          Haftalik savdo grafigi
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={graphData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="name" className="text-xs text-muted-foreground" />
-            <YAxis className="text-xs text-muted-foreground" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-              }}
-            />
-            <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
 
       {/* Top Products */}
       <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
@@ -192,7 +168,7 @@ const AdminDashboard = () => {
           )}
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

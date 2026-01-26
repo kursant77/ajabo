@@ -72,7 +72,11 @@ const DeliveryDashboard = () => {
   };
 
   const handleStatusUpdate = (orderId: string, newStatus: Order["status"]) => {
-    updateOrder(orderId, { status: newStatus });
+    // Include the delivery person's name in the update so we can track who delivered it
+    updateOrder(orderId, {
+      status: newStatus,
+      deliveryPerson: displayName
+    });
 
     if (newStatus === "delivered") {
       toast.success("Buyurtma yetkazildi deb belgilandi");
@@ -97,9 +101,15 @@ const DeliveryDashboard = () => {
 
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
 
-  const filteredOrders = deliveryOrders.filter((order) =>
-    activeTab === "active" ? order.status !== "delivered" : order.status === "delivered"
-  );
+  const filteredOrders = deliveryOrders.filter((order) => {
+    if (activeTab === "active") {
+      // Show orders that are not delivered and are either unassigned or assigned to this user
+      return order.status !== "delivered" && (!order.deliveryPerson || order.deliveryPerson === displayName);
+    } else {
+      // Show only orders delivered by this user in the history
+      return order.status === "delivered" && order.deliveryPerson === displayName;
+    }
+  });
 
   if (loading) {
     return (
@@ -162,9 +172,9 @@ const DeliveryDashboard = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-card-foreground">
-                {paidOrders.length}
+                {deliveryOrders.length}
               </p>
-              <p className="text-sm text-muted-foreground">Jami buyurtmalar</p>
+              <p className="text-sm text-muted-foreground">Jami dastavkalar</p>
             </div>
           </div>
 

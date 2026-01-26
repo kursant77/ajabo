@@ -18,8 +18,8 @@
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 15%;
 
-        /* Vibrant Orange Primary (#F89800) */
-        --primary: 37 100% 49%;
+        /* Vibrant Red Primary */
+        --primary: 0 84% 60%;
         --primary-foreground: 0 0% 100%;
 
         /* Soft grey secondary */
@@ -35,12 +35,12 @@
 
         --border: 0 0% 92%;
         --input: 0 0% 92%;
-        --ring: 37 100% 49%;
+        --ring: 0 84% 60%;
 
         --radius: 0.75rem;
 
         /* Custom cafe tokens */
-        --cafe-warm: 30 70% 50%;
+        --cafe-warm: 0 70% 50%;
         --cafe-cream: 40 40% 94%;
         --cafe-espresso: 20 40% 18%;
 
@@ -64,7 +64,7 @@
         --popover: 20 25% 8%;
         --popover-foreground: 35 30% 95%;
 
-        --primary: 30 60% 55%;
+        --primary: 0 70% 60%;
         --primary-foreground: 20 25% 8%;
 
         --secondary: 20 15% 18%;
@@ -81,9 +81,9 @@
 
         --border: 20 15% 20%;
         --input: 20 15% 20%;
-        --ring: 30 60% 55%;
+        --ring: 0 70% 60%;
 
-        --cafe-warm: 30 70% 50%;
+        --cafe-warm: 0 70% 50%;
         --cafe-cream: 35 20% 20%;
         --cafe-espresso: 35 30% 90%;
 

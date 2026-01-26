@@ -1,6 +1,6 @@
 
-import { useRef, useCallback, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRef, useCallback, useEffect, useState, useMemo } from "react";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { toast } from "sonner";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 import {
@@ -13,10 +13,18 @@ import {
   LogOut,
   Settings,
   Menu,
+  Package,
   Bell,
   BellOff,
   Tag,
-  Users
+  Users,
+  ChevronDown,
+  ChefHat,
+  HandPlatter,
+  GlassWater,
+  Briefcase,
+  DollarSign,
+  ArrowDownRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -44,31 +52,211 @@ const menuItems = [
     path: "/admin/categories",
   },
   {
-    icon: BarChart3,
-    label: "Statistika",
-    path: "/admin/stats",
+    icon: Package,
+    label: "Omborhona",
+    path: "/admin/inventory",
   },
   {
-    icon: Truck,
-    label: "Dastavkachilar",
-    path: "/admin/delivery",
+    icon: Briefcase,
+    label: "Ishchilar",
+    children: [
+      {
+        icon: Truck,
+        label: "Dastavkachilar",
+        path: "/admin/delivery",
+      },
+      {
+        icon: ChefHat,
+        label: "Oshpazlar",
+        path: "/admin/staff/cooks",
+      },
+      {
+        icon: HandPlatter,
+        label: "Afitsiantlar",
+        path: "/admin/staff/waiters",
+      },
+      {
+        icon: GlassWater,
+        label: "Barmenlar",
+        path: "/admin/staff/barmen",
+      },
+    ],
   },
   {
     icon: Users,
     label: "Foydalanuvchilar",
     path: "/admin/users",
   },
+  {
+    icon: DollarSign,
+    label: "Moliya",
+    children: [
+      {
+        icon: ArrowDownRight,
+        label: "Xarajatlar",
+        path: "/admin/expenses",
+      },
+      {
+        icon: BarChart3,
+        label: "Statistika",
+        path: "/admin/stats",
+      },
+    ],
+  },
+  {
+    icon: BarChart3,
+    label: "Hisobotlar",
+    path: "/admin/reports",
+  },
 ];
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-  title: string;
+interface SidebarItemProps {
+  item: typeof menuItems[0];
+  location: any;
+  navigate: (path: string) => void;
+  setIsMobileOpen: (open: boolean) => void;
 }
+
+const SidebarItem = ({ item, location, navigate, setIsMobileOpen }: SidebarItemProps) => {
+  const [isOpen, setIsOpen] = useState(() => {
+    return item.children?.some(child => location.pathname === child.path) || false;
+  });
+  const isActive = item.path ? location.pathname === item.path : false;
+  const isChildActive = item.children?.some(child => location.pathname === child.path);
+  const Icon = item.icon;
+
+  if (item.children) {
+    return (
+      <div className="space-y-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+            isChildActive
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <Icon className="h-5 w-5" />
+            {item.label}
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isOpen && "rotate-180"
+            )}
+          />
+        </button>
+        {isOpen && (
+          <div className="pl-4 space-y-1 mt-1 border-l-2 border-primary/10 ml-6">
+            {item.children.map((child) => {
+              const ChildIcon = child.icon;
+              const isChildItemActive = location.pathname === child.path;
+              return (
+                <button
+                  key={child.path}
+                  onClick={() => {
+                    navigate(child.path);
+                    setIsMobileOpen(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    isChildItemActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <ChildIcon className="h-4 w-4" />
+                  {child.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        navigate(item.path!);
+        setIsMobileOpen(false);
+      }}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+        isActive
+          ? "bg-primary text-primary-foreground shadow-md"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      {item.label}
+    </button>
+  );
+};
+
+interface SidebarContentProps {
+  location: any;
+  navigate: (path: string) => void;
+  setIsMobileOpen: (open: boolean) => void;
+  handleLogout: () => void;
+}
+
+const SidebarContent = ({ location, navigate, setIsMobileOpen, handleLogout }: SidebarContentProps) => (
+  <div className="flex h-full flex-col">
+    {/* Logo */}
+    <div className="flex items-center gap-3 p-6 border-b border-border/50">
+      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
+        <Coffee className="h-5 w-5" />
+      </div>
+      <div>
+        <h1 className="font-bold text-lg text-foreground">Ajabo Admin</h1>
+        <p className="text-xs text-muted-foreground">Boshqaruv paneli</p>
+      </div>
+    </div>
+
+    {/* Navigation */}
+    <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+      {menuItems.map((item) => (
+        <SidebarItem
+          key={item.label}
+          item={item}
+          location={location}
+          navigate={navigate}
+          setIsMobileOpen={setIsMobileOpen}
+        />
+      ))}
+    </nav>
+
+    {/* Bottom Section */}
+    <div className="p-4 border-t border-border/50 space-y-1">
+      <button
+        onClick={() => {
+          navigate("/admin/settings");
+          setIsMobileOpen(false);
+        }}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+      >
+        <Settings className="h-5 w-5" />
+        Sozlamalar
+      </button>
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
+      >
+        <LogOut className="h-5 w-5" />
+        Chiqish
+      </button>
+    </div>
+  </div>
+);
 
 // Sound URL
 const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 
-const AdminLayout = ({ children, title }: AdminLayoutProps) => {
+const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [adminName, setAdminName] = useState("");
@@ -103,13 +291,6 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
 
   // Monitor for new orders
   useEffect(() => {
-    // Check if new order arrived (length increased) AND it's not the initial load (prev!=0)
-    // NOTE: If initial load is 0 and then it loads 5, it might trigger. 
-    // Ideally we'd set prevOrdersLength.current = orders.length on mount if we want to skip.
-    // But usually initial state is empty array [] then populates.
-    // Let's refine: play sound only if prevOrdersLength > 0 (meaning we already had data loaded)
-    // OR if we want to sound on first arrival if page was open blank? 
-    // Safest: prevOrdersLength.current !== 0 to avoid sound on refresh.
     if (orders.length > prevOrdersLength.current && prevOrdersLength.current !== 0) {
       playNotificationSound();
       toast.success("Yangi buyurtma keldi!");
@@ -121,21 +302,27 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
   useEffect(() => {
     const authData = localStorage.getItem("adminAuth");
     if (!authData) {
-      navigate("/admin");
+      if (location.pathname !== "/admin") {
+        navigate("/admin");
+      }
       return;
     }
 
     try {
       const { isAuthenticated, displayName } = JSON.parse(authData);
       if (!isAuthenticated) {
-        navigate("/admin");
+        if (location.pathname !== "/admin") {
+          navigate("/admin");
+        }
         return;
       }
-      setAdminName(displayName);
+      setAdminName(displayName || "Admin");
     } catch {
-      navigate("/admin");
+      if (location.pathname !== "/admin") {
+        navigate("/admin");
+      }
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
@@ -143,73 +330,45 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
     navigate("/admin");
   };
 
-  const SidebarContent = () => (
-    <div className="flex h-full flex-col">
-      {/* Logo */}
-      <div className="flex items-center gap-3 p-6 border-b border-border/50">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
-          <Coffee className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="font-bold text-lg text-foreground">Ajabo Admin</h1>
-          <p className="text-xs text-muted-foreground">Boshqaruv paneli</p>
-        </div>
-      </div>
+  const title = useMemo(() => {
+    // Check main menu items and children
+    for (const item of menuItems) {
+      if (item.path === location.pathname) return item.label;
+      if (item.children) {
+        const child = item.children.find(c => c.path === location.pathname);
+        if (child) return child.label;
+      }
+    }
 
-      {/* Navigation */}
-      <nav className="p-4 space-y-1 flex-1">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.path}
-              onClick={() => {
-                navigate(item.path);
-                setIsMobileOpen(false);
-              }}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+    // Handle dynamic staff routes
+    if (location.pathname.startsWith('/admin/staff/')) {
+      const role = location.pathname.split('/').pop();
+      switch (role) {
+        case 'cooks': return "Oshpazlar";
+        case 'waiters': return "Afitsiantlar";
+        case 'barmen': return "Barmenlar";
+        default: return "Ishchilar";
+      }
+    }
 
-      {/* Bottom Section */}
-      <div className="p-4 border-t border-border/50 space-y-1">
-        <button
-          onClick={() => {
-            navigate("/admin/settings");
-            setIsMobileOpen(false);
-          }}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
-        >
-          <Settings className="h-5 w-5" />
-          Sozlamalar
-        </button>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
-        >
-          <LogOut className="h-5 w-5" />
-          Chiqish
-        </button>
-      </div>
-    </div>
-  );
+    // Handle other dynamic routes
+    if (location.pathname.startsWith('/admin/users/')) return "Foydalanuvchi profili";
+    if (location.pathname === '/admin/settings') return "Sozlamalar";
+    if (location.pathname === '/admin/delivery') return "Dastavkachilar";
+
+    return "Boshqaruv paneli";
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 bg-card border-r border-border/50 shadow-lg fixed h-full z-40">
-        <SidebarContent />
+        <SidebarContent
+          location={location}
+          navigate={navigate}
+          setIsMobileOpen={setIsMobileOpen}
+          handleLogout={handleLogout}
+        />
       </aside>
 
       {/* Main Content */}
@@ -226,7 +385,12 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64 bg-card border-r border-border/50">
-                  <SidebarContent />
+                  <SidebarContent
+                    location={location}
+                    navigate={navigate}
+                    setIsMobileOpen={setIsMobileOpen}
+                    handleLogout={handleLogout}
+                  />
                 </SheetContent>
               </Sheet>
 
@@ -266,7 +430,9 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 md:p-8 flex-1 overflow-x-hidden">{children}</main>
+        <main className="p-4 md:p-8 flex-1 overflow-x-hidden">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

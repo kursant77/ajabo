@@ -1,19 +1,35 @@
-import { useState, useMemo, useCallback } from "react";
+
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 import { useAdminOrdersQuery } from "@/hooks/useAdminOrdersQuery";
+import { useSupabaseStaff } from "@/hooks/useSupabaseStaff";
 import { toast } from "sonner";
-import { Search, RefreshCw } from "lucide-react";
-import AdminLayout from "@/components/admin/AdminLayout";
+import { Search, RefreshCw, Truck, User, Plus } from "lucide-react";
 import AdminOrderCard from "@/components/admin/AdminOrderCard";
+import AdminOrderModal from "@/components/admin/AdminOrderModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { type AdminOrder } from "@/data/adminData";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Pagination from "@/components/admin/Pagination";
 
 const AdminOrders = () => {
   const { updateOrder } = useSupabaseOrders();
   const { data: orders = [], isLoading, isRefetching } = useAdminOrdersQuery(10000); // Poll every 10 seconds
+  const { personnel: deliveryPersonnel } = useSupabaseStaff("delivery");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"pending" | "processing" | "delivered">("pending");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   // Memoize handlers to prevent re-creating functions on every render
   const handleStatusChange = useCallback((orderId: string, status: "pending" | "ready" | "on_way" | "delivered") => {
@@ -30,9 +46,16 @@ const AdminOrders = () => {
   }, [updateOrder, orders]);
 
   const handleAssignDelivery = useCallback((orderId: string) => {
-    updateOrder(orderId, { deliveryPerson: "Sardor Yusupov" });
-    toast.success("Dastavkachi tayinlandi");
-  }, [updateOrder]);
+    setSelectedOrderId(orderId);
+  }, []);
+
+  const confirmAssignment = async (personName: string) => {
+    if (!selectedOrderId) return;
+
+    await updateOrder(selectedOrderId, { deliveryPerson: personName, status: "on_way" });
+    toast.success(`Tayinlandi: ${personName}`);
+    setSelectedOrderId(null);
+  };
 
   // Memoize filtered orders and counts - only recalculate when dependencies change
   const { filteredOrders, pendingCount, processingCount, deliveredCount } = useMemo(() => {
@@ -69,18 +92,36 @@ const AdminOrders = () => {
     };
   }, [orders, searchQuery, statusFilter]);
 
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(start, start + itemsPerPage);
+  }, [filteredOrders, currentPage]);
+
+  // Reset to page 1 when filter/search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
   if (isLoading) {
     return (
-      <AdminLayout title="Buyurtmalar">
-        <div className="flex justify-center items-center h-48">
-          <p>Yuklanmoqda...</p>
-        </div>
-      </AdminLayout>
+      <div className="flex justify-center items-center h-48">
+        <p>Yuklanmoqda...</p>
+      </div>
     );
   }
 
   return (
-    <AdminLayout title="Buyurtmalar">
+    <>
+      {/* Header with Create Order Button */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Buyurtmalar</h1>
+        <Button onClick={() => setIsOrderModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Buyurtma kiritish
+        </Button>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
@@ -122,7 +163,7 @@ const AdminOrders = () => {
 
       {/* Orders Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredOrders.map((order) => (
+        {paginatedOrders.map((order) => (
           <AdminOrderCard
             key={order.id}
             order={order}
@@ -132,12 +173,65 @@ const AdminOrders = () => {
         ))}
       </div>
 
+      {/* Pagination component */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
       {filteredOrders.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Buyurtmalar topilmadi</p>
         </div>
       )}
-    </AdminLayout>
+      {/* Assignment Dialog */}
+      <Dialog open={!!selectedOrderId} onOpenChange={(open) => !open && setSelectedOrderId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-primary" />
+              Dastavkachi tayinlash
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <p className="text-sm text-muted-foreground mb-4">
+              Ushbu buyurtmani yetkazib berish uchun dastavkachini tanlang:
+            </p>
+            {deliveryPersonnel.length > 0 ? (
+              <div className="grid gap-2">
+                {deliveryPersonnel.map((person) => (
+                  <Button
+                    key={person.id}
+                    variant="outline"
+                    className="justify-start gap-3 h-12 hover:border-primary hover:bg-primary/5"
+                    onClick={() => confirmAssignment(person.display_name)}
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {person.display_name.charAt(0)}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">{person.display_name}</span>
+                      <span className="text-[10px] text-muted-foreground">ID: {person.id.slice(0, 8)}</span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 bg-muted/30 rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground">Dastavkachilar topilmadi</p>
+                <Button variant="link" size="sm" onClick={() => window.location.href = '/admin/delivery'}>
+                  Dastavkachi qo'shish
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Order Modal */}
+      <AdminOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} />
+    </>
   );
 };
 

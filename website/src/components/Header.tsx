@@ -7,7 +7,7 @@ interface HeaderProps {
 
 const Header = ({ userName, onLogout }: HeaderProps) => {
   return (
-    <header className="relative overflow-hidden bg-gradient-to-br from-[#F89800] via-[#FFB74D] to-[#F89800] py-12 md:py-20">
+    <header className="relative overflow-hidden bg-primary py-12 md:py-20">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-3xl animate-pulse" />

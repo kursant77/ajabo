@@ -116,25 +116,26 @@ export function useSupabaseOrders() {
 
     const updateOrder = useCallback(async (orderId: string, updates: any) => {
         try {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from("orders")
                 .update(mapToDBUpdates(updates))
-                .eq("id", orderId);
+                .eq("id", orderId)
+                .select()
+                .single();
 
             if (error) throw error;
 
-            // Notify Telegram bot if status changed
-            const updatedOrder = orders.find(o => o.id === orderId);
-            if (updatedOrder && updates.status && updates.status !== "pending_payment") {
-                let telegramUserId = updatedOrder.telegramUserId;
+            // Notify Telegram bot if status changed and we have data
+            if (data && updates.status && updates.status !== "pending_payment") {
+                let telegramUserId = data.telegram_user_id;
 
                 // If missing telegramUserId, try to look it up by phone number in profiles
-                if (!telegramUserId && updatedOrder.phoneNumber) {
-                    console.log(`🔍 Looking up Telegram ID for phone: ${updatedOrder.phoneNumber}`);
+                if (!telegramUserId && data.phone_number) {
+                    console.log(`🔍 Looking up Telegram ID for phone: ${data.phone_number}`);
                     const { data: profileData } = await supabase
                         .from("profiles")
                         .select("telegram_id")
-                        .eq("phone", updatedOrder.phoneNumber)
+                        .eq("phone", data.phone_number)
                         .single();
 
                     if (profileData) {
@@ -148,14 +149,14 @@ export function useSupabaseOrders() {
                     let botStatus: any = updates.status;
                     if (updates.status === "on_way") botStatus = "delivering";
                     if (updates.status === "pending") botStatus = "confirmed";
-                    // 'ready' and 'delivered' are already correct
 
                     console.log(`Sending status update to bot: ${botStatus} for user ${telegramUserId}`);
                     await notifyTelegramBot({
                         order_id: orderId,
                         telegram_user_id: telegramUserId,
                         status: botStatus,
-                        product_name: updatedOrder.productName
+                        product_name: data.product_name,
+                        order_type: data.order_type
                     });
                 }
             }
@@ -200,7 +201,8 @@ export function useSupabaseOrders() {
                     order_id: data.id,
                     telegram_user_id: data.telegram_user_id,
                     status: "confirmed",
-                    product_name: data.product_name
+                    product_name: data.product_name,
+                    order_type: data.order_type
                 });
             }
 

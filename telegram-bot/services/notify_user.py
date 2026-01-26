@@ -1,3 +1,4 @@
+
 """
 Service for sending notifications to users.
 """
@@ -16,13 +17,29 @@ MESSAGE_TEMPLATES = {
         "⏳ <b>Holat:</b> Tasdiqlandi\n\n"
         "<i>Tez orada taomingizni tayyorlashni boshlaymiz!</i>"
     ),
-    "ready": (
-        "🍳 <b>Buyurtmangiz tayyor bo'ldi!</b>\n\n"
-        "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
-        "🍔 <b>Mahsulot:</b> {product_name}\n"
-        "🏃‍♂️ <b>Holat:</b> Dastavkaga berildi\n\n"
-        "<i>Dastavkachi hozir yo'lga chiqadi.</i>"
-    ),
+    "ready": {
+        "delivery": (
+            "🍳 <b>Buyurtmangiz tayyor bo'ldi!</b>\n\n"
+            "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
+            "🍔 <b>Mahsulot:</b> {product_name}\n"
+            "🏃‍♂️ <b>Holat:</b> Dastavkaga berildi\n\n"
+            "<i>Dastavkachi hozir yo'lga chiqadi.</i>"
+        ),
+        "takeaway": (
+            "🍳 <b>Buyurtmangiz tayyor bo'ldi!</b>\n\n"
+            "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
+            "🍔 <b>Mahsulot:</b> {product_name}\n"
+            "🛍️ <b>Holat:</b> Tayyor\n\n"
+            "<i>Kelib olib ketishingiz mumkin!</i>"
+        ),
+        "preorder": (
+            "🍳 <b>Broningiz tayyor!</b>\n\n"
+            "🆔 <b>ID:</b> <code>{order_id}</code>\n"
+            "🍔 <b>Mahsulot:</b> {product_name}\n"
+            "📅 <b>Holat:</b> Stolingiz tayyor\n\n"
+            "<i>Sizni kutmoqdamiz!</i>"
+        )
+    },
     "delivering": (
         "🚚 <b>Buyurtmangiz yo'lda!</b>\n\n"
         "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
@@ -30,14 +47,30 @@ MESSAGE_TEMPLATES = {
         "📍 <b>Holat:</b> Yetkazilmoqda\n\n"
         "<i>Iltimos, kuting, dastavkachi yaqin orada yetib boradi.</i>"
     ),
-    "delivered": (
-        "✅ <b>Tabriklaymiz! Buyurtma yetkazildi!</b>\n\n"
-        "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
-        "🍔 <b>Mahsulot:</b> {product_name}\n"
-        "🏁 <b>Holat:</b> Yakunlandi\n\n"
-        "<b>Yoqimli ishtaha! 🍽️</b>\n"
-        "<i>Bizni tanlaganingiz uchun rahmat!</i>"
-    )
+    "delivered": {
+        "delivery": (
+            "✅ <b>Tabriklaymiz! Buyurtma yetkazildi!</b>\n\n"
+            "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
+            "🍔 <b>Mahsulot:</b> {product_name}\n"
+            "🏁 <b>Holat:</b> Yakunlandi\n\n"
+            "<b>Yoqimli ishtaha! 🍽️</b>\n"
+            "<i>Bizni tanlaganingiz uchun rahmat!</i>"
+        ),
+        "takeaway": (
+            "✅ <b>Tabriklaymiz! Buyurtma olib ketildi!</b>\n\n"
+            "🆔 <b>Buyurtma:</b> <code>{order_id}</code>\n"
+            "🍔 <b>Mahsulot:</b> {product_name}\n"
+            "🏁 <b>Holat:</b> Yakunlandi\n\n"
+            "<b>Yoqimli ishtaha! 🍽️</b>\n"
+            "<i>Bizni tanlaganingiz uchun rahmat!</i>"
+        ),
+        "preorder": (
+            "✅ <b>Tabriklaymiz! Tashrifingiz yakunlandi!</b>\n\n"
+            "🆔 <b>ID:</b> <code>{order_id}</code>\n"
+            "🏁 <b>Holat:</b> Yakunlandi\n\n"
+            "<i>Tashrifingiz uchun rahmat! Yana kutib qolamiz! 🍽️</i>"
+        )
+    }
 }
 
 
@@ -46,19 +79,11 @@ async def notify_user_order_status(
     telegram_user_id: int,
     order_id: str,
     status: str,
-    product_name: str = "Savatcha"
+    product_name: str = "Savatcha",
+    order_type: str = "delivery"
 ) -> dict:
     """
     Send order status notification to the user.
-    
-    Args:
-        bot: Bot instance
-        telegram_user_id: User's Telegram ID
-        order_id: Order ID
-        status: Order status (confirmed, ready, delivering, delivered)
-        
-    Returns:
-        dict with success status and message
     """
     if status not in MESSAGE_TEMPLATES:
         logger.error(f"Invalid status: {status}")
@@ -70,8 +95,19 @@ async def notify_user_order_status(
     # Format order ID for display
     display_id = format_order_id(order_id)
     
+    # Get message template base
+    template = MESSAGE_TEMPLATES[status]
+    
+    # If template is a dictionary, pick based on order_type
+    if isinstance(template, dict):
+        # Default to 'delivery' if order_type is unknown, None or empty
+        current_type = order_type if order_type and order_type in template else "delivery"
+        text_template = template.get(current_type, template.get("delivery"))
+    else:
+        text_template = template
+        
     # Get message template
-    message_text = MESSAGE_TEMPLATES[status].format(
+    message_text = text_template.format(
         order_id=display_id,
         product_name=product_name or "Taomlar"
     )
@@ -79,7 +115,8 @@ async def notify_user_order_status(
     try:
         await bot.send_message(
             chat_id=telegram_user_id,
-            text=message_text
+            text=message_text,
+            parse_mode="HTML"
         )
         
         logger.info(

@@ -94,8 +94,8 @@ const AdminOrderCard = ({
             variant="default"
             size="sm"
             onClick={() => {
-              const nextStatus = order.orderType === "delivery" ? "ready" : "delivered";
-              onStatusChange(order.id, nextStatus as any);
+              // Now all orders go through 'ready' state first
+              onStatusChange(order.id, "ready");
             }}
             className="w-full"
           >
@@ -104,13 +104,48 @@ const AdminOrderCard = ({
         )}
 
         {order.status === "ready" && (
+          <div className="flex flex-col gap-2 w-full">
+            {order.orderType === "delivery" ? (
+              !order.deliveryPerson && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onAssignDelivery?.(order.id)}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  Dastavkachi tayinlash
+                </Button>
+              )
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => onStatusChange(order.id, "delivered")}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {order.orderType === "takeaway" ? "Olib ketildi" : "Mijoz keldi"}
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onStatusChange(order.id, "pending")}
+              className="w-full"
+            >
+              Qayta ochish
+            </Button>
+          </div>
+        )}
+
+        {order.status === "on_way" && (
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
-            onClick={() => onStatusChange(order.id, "pending")}
-            className="flex-1"
+            onClick={() => onStatusChange(order.id, "delivered")}
+            className="flex-1 bg-green-600 hover:bg-green-700"
           >
-            Qayta ochish
+            Yetkazildi
           </Button>
         )}
 
@@ -119,7 +154,7 @@ const AdminOrderCard = ({
             variant="outline"
             size="sm"
             onClick={() => onStatusChange(order.id, "pending")}
-            className="flex-1"
+            className="w-full"
           >
             Qayta ochish
           </Button>

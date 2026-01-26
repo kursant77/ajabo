@@ -15,16 +15,17 @@ import {
   Legend,
 } from "recharts";
 import { ShoppingBag, DollarSign, TrendingUp, Package } from "lucide-react";
-import AdminLayout from "@/components/admin/AdminLayout";
 import StatsCard from "@/components/admin/StatsCard";
 import { Button } from "@/components/ui/button";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 import { useSupabaseProducts } from "@/hooks/useSupabaseProducts";
+import { useSupabaseExpenses } from "@/hooks/useSupabaseExpenses";
 
 const AdminStats = () => {
   const [period, setPeriod] = useState<"today" | "week" | "month">("week");
   const { orders } = useSupabaseOrders();
   const { products } = useSupabaseProducts();
+  const { expenses } = useSupabaseExpenses();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("uz-UZ").format(price);
@@ -51,20 +52,45 @@ const AdminStats = () => {
     });
   }, [orders, period]);
 
+  // 1.1 Filter Expenses by Period
+  const filteredExpenses = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    return expenses.filter((e) => {
+      const expenseDate = new Date(e.date);
+      if (period === "today") {
+        return expenseDate >= todayStart;
+      } else if (period === "week") {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - 7);
+        return expenseDate >= weekStart;
+      } else {
+        const monthStart = new Date(now);
+        monthStart.setMonth(now.getMonth() - 1);
+        return expenseDate >= monthStart;
+      }
+    });
+  }, [expenses, period]);
+
   // 2. Calculate Stats Cards
   const stats = useMemo(() => {
     const totalOrders = filteredOrders.length;
     const revenue = filteredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     const delivered = filteredOrders.filter((o) => o.status === "delivered").length;
     const pending = filteredOrders.filter((o) => o.status === "pending").length;
+    const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const netProfit = revenue - totalExpenses;
 
     return {
       orders: totalOrders,
       revenue,
       delivered,
-      pending
+      pending,
+      totalExpenses,
+      netProfit
     };
-  }, [filteredOrders]);
+  }, [filteredOrders, filteredExpenses]);
 
   // 3. Prepare Chart Data (Daily breakdown for Week/Month, Hourly for Today?)
   // For simplicity, let's keep it daily for Week/Month, and maybe just list orders for Today or keep it daily (only 1 bar).
@@ -109,9 +135,23 @@ const AdminStats = () => {
           entry.orders += 1;
         }
       });
-      return Array.from(daysMap.values());
+
+      // Add expenses to chart data
+      filteredExpenses.forEach(e => {
+        const d = new Date(e.date);
+        const key = d.toLocaleDateString("uz-UZ", { weekday: "short", day: "numeric" });
+        if (daysMap.has(key)) {
+          const entry = daysMap.get(key);
+          entry.expenses = (entry.expenses || 0) + (e.amount || 0);
+        }
+      });
+
+      return Array.from(daysMap.values()).map(d => ({
+        ...d,
+        profit: d.revenue - (d.expenses || 0)
+      }));
     }
-  }, [filteredOrders, period]);
+  }, [filteredOrders, filteredExpenses, period]);
 
 
   // 4. Category Pie Chart
@@ -139,6 +179,32 @@ const AdminStats = () => {
   }, [filteredOrders, products]);
 
 
+  // 4.1 Expense Category Pie Chart
+  const expenseCategoryData = useMemo(() => {
+    const catMap = new Map<string, number>();
+    const colors: Record<string, string> = {
+      "oylik": "#ef4444",
+      "soliq": "#f97316",
+      "ijara": "#8b5cf6",
+      "kommunal": "#06b6d4",
+      "mahsulotlar": "#ec4899",
+      "reklama": "#0ea5e9",
+      "boshqa": "#94a3b8"
+    };
+
+    filteredExpenses.forEach(e => {
+      const cat = e.category || "Boshqa";
+      catMap.set(cat, (catMap.get(cat) || 0) + e.amount);
+    });
+
+    return Array.from(catMap.entries()).map(([name, value]) => ({
+      name,
+      value,
+      color: colors[name.toLowerCase()] || "#94a3b8"
+    }));
+  }, [filteredExpenses]);
+
+
   // 5. Top Products
   const topProductsList = useMemo(() => {
     const productSales: Record<string, { quantity: number; revenue: number }> = {};
@@ -162,7 +228,7 @@ const AdminStats = () => {
 
 
   return (
-    <AdminLayout title="Statistika">
+    <>
       {/* Period Selector */}
       <div className="flex gap-2 mb-6">
         <Button
@@ -193,29 +259,31 @@ const AdminStats = () => {
           icon={ShoppingBag}
         />
         <StatsCard
-          title="Jami daromad"
+          title="Jami tushum"
           value={`${formatPrice(stats.revenue)} so'm`}
-          icon={DollarSign}
-        />
-        <StatsCard
-          title="Yetkazildi"
-          value={stats.delivered}
           icon={TrendingUp}
-          change={stats.orders > 0 ? `${Math.round((stats.delivered / stats.orders) * 100)}%` : "0%"}
           changeType="positive"
         />
         <StatsCard
-          title="Kutilmoqda"
-          value={stats.pending}
-          icon={Package}
+          title="Jami xarajat"
+          value={`${formatPrice(stats.totalExpenses)} so'm`}
+          icon={DollarSign}
+          className="bg-red-50/50"
+        />
+        <StatsCard
+          title="Sof foyda"
+          value={`${formatPrice(stats.netProfit)} so'm`}
+          icon={DollarSign}
+          className={stats.netProfit >= 0 ? "bg-green-50/50 border-green-100" : "bg-red-50/50 border-red-100"}
+          change={stats.revenue > 0 ? `${Math.round((stats.netProfit / stats.revenue) * 100)}%` : "0%"}
+          changeType={stats.netProfit >= 0 ? "positive" : "negative"}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Revenue Chart */}
         <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-6">
-            Daromad dinamikasi ({period === 'today' ? 'Soatlik' : 'Kunlik'})
+            Moliya dinamikasi ({period === 'today' ? 'Soatlik' : 'Kunlik'})
           </h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -229,15 +297,34 @@ const AdminStats = () => {
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                   }}
-                  formatter={(value: number) => [
+                  formatter={(value: number, name: string) => [
                     `${formatPrice(value)} so'm`,
-                    "Daromad",
+                    name === "revenue" ? "Tushum" : name === "expenses" ? "Xarajat" : "Sof foyda",
                   ]}
                 />
+                <Legend />
                 <Line
                   type="monotone"
                   dataKey="revenue"
+                  stroke="#10b981"
+                  name="Tushum"
+                  strokeWidth={3}
+                  dot={{ fill: "#10b981", strokeWidth: 2 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="expenses"
+                  stroke="#ef4444"
+                  name="Xarajat"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={{ fill: "#ef4444", strokeWidth: 1 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="profit"
                   stroke="hsl(var(--primary))"
+                  name="Sof foyda"
                   strokeWidth={3}
                   dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
                 />
@@ -246,30 +333,36 @@ const AdminStats = () => {
           </div>
         </div>
 
-        {/* Orders Chart */}
         <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-6">
-            Buyurtmalar soni
+            Xarajatlar tarkibi
           </h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Bar
-                  dataKey="orders"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
+              <PieChart>
+                {expenseCategoryData.length > 0 ? (
+                  <Pie
+                    data={expenseCategoryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    innerRadius={60}
+                    dataKey="value"
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
+                  >
+                    {expenseCategoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                ) : (
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
+                    Ma'lumot yo'q
+                  </text>
+                )}
+                <Tooltip formatter={(value: number) => formatPrice(value) + " so'm"} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -345,7 +438,7 @@ const AdminStats = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 
