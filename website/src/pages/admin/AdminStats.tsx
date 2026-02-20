@@ -14,7 +14,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { ShoppingBag, DollarSign, TrendingUp, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ShoppingBag, DollarSign, TrendingUp, Package, ArrowLeft } from "lucide-react";
 import StatsCard from "@/components/admin/StatsCard";
 import { Button } from "@/components/ui/button";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
@@ -22,6 +23,7 @@ import { useSupabaseProducts } from "@/hooks/useSupabaseProducts";
 import { useSupabaseExpenses } from "@/hooks/useSupabaseExpenses";
 
 const AdminStats = () => {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<"today" | "week" | "month">("week");
   const { orders } = useSupabaseOrders();
   const { products } = useSupabaseProducts();
@@ -37,6 +39,9 @@ const AdminStats = () => {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     return orders.filter((o) => {
+      // Exclude unpaid and cancelled orders
+      if (o.status === "pending_payment" || o.status === "cancelled") return false;
+
       const orderDate = new Date(o.rawCreatedAt);
       if (period === "today") {
         return orderDate >= todayStart;
@@ -230,25 +235,35 @@ const AdminStats = () => {
   return (
     <>
       {/* Period Selector */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex items-center gap-4 mb-6">
         <Button
-          variant={period === "today" ? "default" : "outline"}
-          onClick={() => setPeriod("today")}
+          variant="outline"
+          size="icon"
+          onClick={() => navigate("/admin/dashboard")}
+          className="rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
         >
-          Bugun
+          <ArrowLeft className="h-5 w-5" />
         </Button>
-        <Button
-          variant={period === "week" ? "default" : "outline"}
-          onClick={() => setPeriod("week")}
-        >
-          Hafta
-        </Button>
-        <Button
-          variant={period === "month" ? "default" : "outline"}
-          onClick={() => setPeriod("month")}
-        >
-          Oy
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={period === "today" ? "default" : "outline"}
+            onClick={() => setPeriod("today")}
+          >
+            Bugun
+          </Button>
+          <Button
+            variant={period === "week" ? "default" : "outline"}
+            onClick={() => setPeriod("week")}
+          >
+            Hafta
+          </Button>
+          <Button
+            variant={period === "month" ? "default" : "outline"}
+            onClick={() => setPeriod("month")}
+          >
+            Oy
+          </Button>
+        </div>
       </div>
 
       {/* Stats Grid */}

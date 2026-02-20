@@ -28,6 +28,10 @@ const AdminOrderCard = ({
         return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">🥡 Tayyor</Badge>;
       case "on_way":
         return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">🚚 Jarayonda</Badge>;
+      case "confirmed":
+        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">👍 Qabul qilindi</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">❌ Bekor qilindi</Badge>;
       case "pending_payment":
         return <Badge className="bg-slate-100 text-slate-500 hover:bg-slate-100 italic">💳 To'lov kutilmoqda</Badge>;
       default:
@@ -116,6 +120,27 @@ const AdminOrderCard = ({
         )}
 
         {order.status === "pending" && (
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onStatusChange(order.id, "confirmed")}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+            >
+              Qabul qilish
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onStatusChange(order.id, "cancelled")}
+              className="px-3"
+            >
+              Bekor qilish
+            </Button>
+          </div>
+        )}
+
+        {order.status === "confirmed" && (
           <Button
             variant="default"
             size="sm"

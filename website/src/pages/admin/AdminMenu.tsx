@@ -3,9 +3,10 @@ import { useState, useMemo, useRef } from "react";
 import { useSupabaseProducts, uploadProductImage, type Product } from "@/hooks/useSupabaseProducts";
 import { useSupabaseCategories } from "@/hooks/useSupabaseCategories";
 import { useSupabaseWarehouse } from "@/hooks/useSupabaseWarehouse";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, ImagePlus, ChefHat, X } from "lucide-react";
+import { Plus, Pencil, Trash2, ImagePlus, ChefHat, X, ArrowLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import Pagination from "@/components/admin/Pagination";
 type IngredientRow = { warehouse_product_id: string; quantity: number };
 
 const AdminMenu = () => {
+  const navigate = useNavigate();
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, getProductIngredients, setProductIngredients } = useSupabaseProducts();
   const { categories } = useSupabaseCategories();
   const { items: warehouseItems } = useSupabaseWarehouse();
@@ -152,7 +154,17 @@ const AdminMenu = () => {
   return (
     <>
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Mahsulotlar ({products.length})</h2>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/admin/dashboard")}
+            className="rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-xl font-semibold">Mahsulotlar ({products.length})</h2>
+        </div>
         <Button onClick={() => handleOpenModal()}>
           <Plus className="mr-2 h-4 w-4" /> Yangi mahsulot
         </Button>

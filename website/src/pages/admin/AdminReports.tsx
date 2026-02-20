@@ -7,8 +7,10 @@ import {
     FileText,
     TrendingUp,
     ShoppingBag,
-    Users
+    Users,
+    ArrowLeft
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,9 @@ const AdminReports = () => {
     // Filter Logic
     const filteredOrders = useMemo(() => {
         return orders.filter((order) => {
+            // Exclude unpaid and cancelled orders
+            if (order.status === "pending_payment" || order.status === "cancelled") return false;
+
             // Search match
             const searchMatch =
                 order.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -174,6 +179,7 @@ const AdminReports = () => {
                                 >
                                     <option value="all">Barcha statuslar</option>
                                     <option value="pending">Kutilmoqda</option>
+                                    <option value="confirmed">Qabul qilindi</option>
                                     <option value="ready">Tayyor</option>
                                     <option value="on_way">Yo'lda</option>
                                     <option value="delivered">Yakunlandi</option>

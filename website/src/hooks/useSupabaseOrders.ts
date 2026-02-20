@@ -24,6 +24,7 @@ interface DBOrder {
     order_type?: string;
     warehouse_deducted?: boolean;
     payment_method?: string;
+    table_name?: string;
 }
 
 /** Deduct order quantity from warehouse: by product_ingredients if product found; else fallback 1:1 by product_name. */
@@ -97,6 +98,7 @@ const mapToAppOrder = (row: DBOrder): Order => ({
     telegramUserId: row.telegram_user_id || null,
     orderType: (row.order_type as Order["orderType"]) || "delivery",
     paymentMethod: (row.payment_method as PaymentMethod) || undefined,
+    tableName: row.table_name || undefined,
 });
 
 // Helper to map App updates to DB structure
@@ -107,6 +109,7 @@ const mapToDBUpdates = (updates: Partial<Order>): Partial<DBOrder> => {
     if (updates.telegramUserId !== undefined) dbUpdates.telegram_user_id = updates.telegramUserId;
     if (updates.orderType !== undefined) dbUpdates.order_type = updates.orderType;
     if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod;
+    if ((updates as any).tableName !== undefined) (dbUpdates as any).table_name = (updates as any).tableName;
     return dbUpdates;
 };
 
@@ -247,6 +250,40 @@ export function useSupabaseOrders() {
                 }
             }
 
+            // --- CASHBACK LOGIC ---
+            // When status changes to delivered, calculate 2% cashback
+            if (data && updates.status === "delivered" && data.phone_number) {
+                const cashbackAmount = (data.total_price || 0) * 0.02;
+                if (cashbackAmount > 0) {
+                    if (isDev) console.log(`💰 Calculating 2% cashback: ${cashbackAmount} for ${data.phone_number}`);
+
+                    try {
+                        // Get current profile
+                        const { data: profile } = await supabase
+                            .from("profiles")
+                            .select("id, cashback_balance")
+                            .eq("phone", data.phone_number)
+                            .single();
+
+                        if (profile) {
+                            const newBalance = (Number(profile.cashback_balance) || 0) + cashbackAmount;
+                            await supabase
+                                .from("profiles")
+                                .update({
+                                    cashback_balance: newBalance,
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq("id", profile.id);
+
+                            if (isDev) console.log(`✅ Cashback updated. New balance: ${newBalance}`);
+                        }
+                    } catch (err) {
+                        console.error("Error updating cashback:", err);
+                    }
+                }
+            }
+            // ----------------------
+
             // When status changes from pending_payment to confirmed/etc., deduct from warehouse once
             if (data && updates.status && updates.status !== "pending_payment" && !data.warehouse_deducted) {
                 await deductWarehouseForOrder(data.id, data.product_name, data.quantity);
@@ -270,6 +307,7 @@ export function useSupabaseOrders() {
                 telegram_user_id: order.telegramUserId || null,
                 order_type: order.orderType,
                 payment_method: order.paymentMethod || null,
+                table_name: (order as any).tableName || null,
             };
 
             const { data, error } = await supabase.from("orders").insert(dbOrder).select().single();

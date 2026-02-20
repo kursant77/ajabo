@@ -47,6 +47,11 @@ const menuItems = [
     path: "/admin/menu",
   },
   {
+    icon: LayoutDashboard,
+    label: "Stollar boshqaruvi",
+    path: "/admin/tables",
+  },
+  {
     icon: Tag,
     label: "Kategoriyalar",
     path: "/admin/categories",

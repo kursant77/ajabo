@@ -27,14 +27,18 @@ const AdminDashboard = () => {
 
   // Memoize all calculations - only recalculate when orders change
   const { todayStats, graphData, topProductsList, paymentStats } = useMemo(() => {
-    // Exclude unpaid orders from all statistics
-    const paidOrders = orders.filter(o => o.status !== "pending_payment");
+    // Exclude unpaid and cancelled orders from all statistics
+    const paidOrders = orders.filter(
+      (o) => o.status !== "pending_payment" && o.status !== "cancelled"
+    );
 
     // Calculate Today's Stats
     const todayOrders = paidOrders.filter((o) => isToday(o.rawCreatedAt));
     const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     const deliveredToday = todayOrders.filter((o) => o.status === "delivered").length;
-    const pendingToday = todayOrders.filter((o) => o.status === "pending").length;
+    const pendingToday = todayOrders.filter(
+      (o) => o.status === "pending" || o.status === "confirmed"
+    ).length;
 
     // Calculate Weekly Graph Data
     const last7Days = Array.from({ length: 7 }, (_, i) => {

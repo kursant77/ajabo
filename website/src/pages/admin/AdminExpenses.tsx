@@ -8,8 +8,10 @@ import {
     Trash2,
     DollarSign,
     Calendar,
-    Database
+    Database,
+    ArrowLeft
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useSupabaseExpenses, ExpenseItem } from "@/hooks/useSupabaseExpenses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +28,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const AdminExpenses = () => {
+    const navigate = useNavigate();
     const { expenses, loading, addExpense, updateExpense, deleteExpense, tableExists } = useSupabaseExpenses();
 
     // States
@@ -181,14 +184,24 @@ CREATE POLICY "Allow all for authenticated" ON expenses FOR ALL USING (true);
 
             {/* Controls */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Qidirish (kategoriya yoki izoh)..."
-                        className="pl-10"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => navigate("/admin/dashboard")}
+                        className="rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Qidirish (kategoriya yoki izoh)..."
+                            className="pl-10"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
                 <Button onClick={handleOpenAdd} className="w-full md:w-auto gap-2">
                     <Plus className="h-4 w-4" /> Xarajat qo'shish

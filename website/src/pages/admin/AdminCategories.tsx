@@ -1,8 +1,9 @@
 
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Tag } from "lucide-react";
+import { Trash2, Plus, Tag, ArrowLeft } from "lucide-react";
 import { useSupabaseCategories } from "@/hooks/useSupabaseCategories";
 import {
     Dialog,
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Pagination from "@/components/admin/Pagination";
 
 const AdminCategories = () => {
+    const navigate = useNavigate();
     const { categories, loading, addCategory, deleteCategory } = useSupabaseCategories();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -39,7 +41,17 @@ const AdminCategories = () => {
     return (
         <>
             <div className="mb-6 flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Barcha Kategoriyalar ({categories.length})</h2>
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => navigate("/admin/dashboard")}
+                        className="rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <h2 className="text-xl font-semibold">Barcha Kategoriyalar ({categories.length})</h2>
+                </div>
                 <Button onClick={() => setIsModalOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Yangi kategoriya
                 </Button>

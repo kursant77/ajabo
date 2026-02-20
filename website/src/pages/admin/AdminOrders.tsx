@@ -4,7 +4,8 @@ import { useSupabaseOrders } from "@/hooks/useSupabaseOrders";
 import { useAdminOrdersQuery } from "@/hooks/useAdminOrdersQuery";
 import { useSupabaseStaff } from "@/hooks/useSupabaseStaff";
 import { toast } from "sonner";
-import { Search, RefreshCw, Truck, User, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, RefreshCw, Truck, User, Plus, ArrowLeft } from "lucide-react";
 import AdminOrderCard from "@/components/admin/AdminOrderCard";
 import AdminOrderModal from "@/components/admin/AdminOrderModal";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
 import Pagination from "@/components/admin/Pagination";
 
 const AdminOrders = () => {
+  const navigate = useNavigate();
   const { updateOrder } = useSupabaseOrders();
   const { data: orders = [], isLoading, isRefetching } = useAdminOrdersQuery(10000); // Poll every 10 seconds
   const { personnel: deliveryPersonnel } = useSupabaseStaff("delivery");
@@ -72,7 +74,10 @@ const AdminOrders = () => {
       if (statusFilter === "pending") {
         matchesStatus = order.status === "pending";
       } else if (statusFilter === "processing") {
-        matchesStatus = order.status === "ready" || order.status === "on_way";
+        matchesStatus =
+          order.status === "confirmed" ||
+          order.status === "ready" ||
+          order.status === "on_way";
       } else if (statusFilter === "delivered") {
         matchesStatus = order.status === "delivered";
       }
@@ -81,7 +86,9 @@ const AdminOrders = () => {
     });
 
     const pending = paidOrders.filter((o) => o.status === "pending").length;
-    const processing = paidOrders.filter((o) => o.status === "ready" || o.status === "on_way").length;
+    const processing = paidOrders.filter(
+      (o) => o.status === "confirmed" || o.status === "ready" || o.status === "on_way"
+    ).length;
     const delivered = paidOrders.filter((o) => o.status === "delivered").length;
 
     return {
@@ -115,7 +122,17 @@ const AdminOrders = () => {
     <>
       {/* Header with Create Order Button */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Buyurtmalar</h1>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/admin/dashboard")}
+            className="rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Buyurtmalar</h1>
+        </div>
         <Button onClick={() => setIsOrderModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Buyurtma kiritish

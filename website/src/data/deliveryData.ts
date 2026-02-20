@@ -4,7 +4,7 @@ export interface Order {
   quantity: number;
   customerName: string;
   phoneNumber: string;
-  status: "pending" | "ready" | "on_way" | "delivered" | "pending_payment";
+  status: "pending" | "ready" | "on_way" | "delivered" | "pending_payment" | "confirmed" | "cancelled";
   address: string;
   createdAt: string;
   rawCreatedAt: Date;
@@ -13,6 +13,7 @@ export interface Order {
   telegramUserId?: number | null;
   paymentMethod?: "click" | "payme" | "paynet" | "uzum" | "cash";
   deliveryPerson?: string;
+  tableName?: string;
 }
 
 export const mockOrders: Order[] = [

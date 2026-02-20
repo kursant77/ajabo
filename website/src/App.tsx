@@ -21,6 +21,8 @@ import AdminStaff from "./pages/admin/AdminStaff";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminExpenses from "./pages/admin/AdminExpenses";
+import AdminTables from "./pages/admin/AdminTables";
+import AdminTableDetail from "./pages/admin/AdminTableDetail";
 import AdminLayout from "@/components/admin/AdminLayout";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed";
@@ -59,6 +61,8 @@ const App = () => (
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/inventory" element={<AdminInventory />} />
             <Route path="/admin/expenses" element={<AdminExpenses />} />
+            <Route path="/admin/tables" element={<AdminTables />} />
+            <Route path="/admin/tables/:id" element={<AdminTableDetail />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
